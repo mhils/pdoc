@@ -55,7 +55,7 @@ def html_module(
     module: pdoc.doc.Module,
     all_modules: Collection[str],
     mtime: Optional[str] = None,
-) -> str:
+) -> tuple[str, str]:
     """
     Renders the documentation for a `pdoc.doc.Module`.
 
@@ -65,17 +65,23 @@ def html_module(
       This is only passed by `pdoc.web`.
     """
     with defuse_unsafe_reprs():
-        return env.select_template(
+        template = env.select_template(
             ["module.html.jinja2", "default/module.html.jinja2"]
-        ).render(
-            module=module,
-            all_modules=all_modules,
-            mtime=mtime,
-            edit_url=edit_url(
-                module.modulename, module.is_package, env.globals["edit_url_map"]
-            ),
-            pygments_css=formatter.get_style_defs(),
         )
+        context = template.new_context(
+            {
+                "module": module,
+                "all_modules": all_modules,
+                "mtime": mtime,
+                "edit_url": edit_url(
+                    module.modulename, module.is_package, env.globals["edit_url_map"]
+                ),
+                "pygments_css": formatter.get_style_defs(),
+            }
+        )
+        contents = "".join(template.root_render_func(context))
+        filename = "".join(template.blocks["filename"](context)).strip()
+        return filename, contents
 
 
 def html_index(all_modules: Collection[str]) -> str:
