@@ -33,9 +33,6 @@
                     --accent2: #c1c1c1;
 
                     --nav-hover: rgba(255, 255, 255, 0.5);
-                    --name: #0066BB;
-                    --def: #008800;
-                    --annotation: #007020;
                 }
             {% endblock %}
 
@@ -430,22 +427,17 @@
                     margin-left: 2rem;
                 }
 
-                .pdoc .name {
-                    color: var(--name);
-                    font-weight: bold;
-                }
-
-                .pdoc .def {
-                    color: var(--def);
+                .pdoc .variable > .nv,
+                .pdoc .function > .nf,
+                .pdoc .function > .k,
+                .pdoc .class    > .nc,
+                .pdoc .class    > .k
+                {
                     font-weight: bold;
                 }
 
                 .pdoc .signature {
                     white-space: pre-wrap;
-                }
-
-                .pdoc .annotation {
-                    color: var(--annotation);
                 }
 
                 /* Inherited Members */
@@ -527,12 +519,12 @@
 {% enddefaultmacro %}
 {% defaultmacro annotation(var) %}
     {%- if var.annotation_str -%}
-        <span class="annotation">{{ var.annotation_str | escape | linkify }}</span>
+        <span class="nb">{{ var.annotation_str | escape | linkify }}</span>
     {%- endif -%}
 {% enddefaultmacro %}
 {% defaultmacro decorators(doc) %}
     {% for d in doc.decorators if not d.startswith("@_") %}
-        <div class="decorator">{{ d }}</div>
+        <div class="nd">{{ d }}</div>
     {% endfor %}
 {% enddefaultmacro %}
 {% defaultmacro headerlink(doc) -%}
@@ -542,12 +534,12 @@
     <div class="attr function">{{ headerlink(fn) }}
         {{ decorators(fn) }}
         {% if fn.name == "__init__" %}
-            <span class="name">{{ ".".join(fn.qualname.split(".")[:-1]) }}</span>
+            <span class="nf">{{ ".".join(fn.qualname.split(".")[:-1]) }}</span>
             {#- no space -#}
             <span class="signature">{{ fn.signature_without_self | escape | linkify }}</span>
         {% else %}
-            <span class="def">{{ fn.funcdef }}</span>
-            <span class="name">{{ fn.name }}</span>
+            <span class="k">{{ fn.funcdef }}</span>
+            <span class="nf">{{ fn.name }}</span>
             {#- no space -#}
             <span class="signature">{{ fn.signature | escape | linkify }}</span>:
         {% endif %}
@@ -555,18 +547,18 @@
 {% enddefaultmacro %}
 {% defaultmacro variable(var) %}
     <div class="attr variable">{{ headerlink(var) }}
-        <span class="name">{{ var.name }}</span>{{ annotation(var) }}{{ default_value(var) }}
+        <span class="nv">{{ var.name }}</span>{{ annotation(var) }}{{ default_value(var) }}
     </div>
 {% enddefaultmacro %}
 {% defaultmacro submodule(mod) %}
-    <div class="attr module">{{ headerlink(mod) }}<span class="name">{{ mod.taken_from | link }}</span></div>
+    <div class="attr module">{{ headerlink(mod) }}<span class="nn">{{ mod.taken_from | link }}</span></div>
 {% enddefaultmacro %}
 {% defaultmacro class(cls) %}
     <div class="attr class">
         {{ headerlink(cls) }}
         {{ decorators(cls) }}
-        <span class="def">class</span>
-        <span class="name">{{ cls.qualname }}</span>
+        <span class="k">class</span>
+        <span class="nc">{{ cls.qualname }}</span>
         {{- bases(cls) -}}:
     </div>
 {% enddefaultmacro %}
@@ -925,13 +917,13 @@
                             let heading;
                             switch (result.doc.type) {
                                 case "function":
-                                    heading = `<span class="def">${doc.funcdef}</span> <span class="name">${doc.fullname}</span><span class="signature">(${doc.parameters.join(", ")})</span>`;
+                                    heading = `<span class="k">${doc.funcdef}</span> <span class="nf">${doc.fullname}</span><span class="signature">(${doc.parameters.join(", ")})</span>`;
                                     break;
                                 case "class":
-                                    heading = `<span class="def">class</span> <span class="name">${doc.fullname}</span>`;
+                                    heading = `<span class="k">class</span> <span class="nc">${doc.fullname}</span>`;
                                     break;
                                 default:
-                                    heading = `<span class="name">${doc.fullname}</span>`;
+                                    heading = `<span class="nv">${doc.fullname}</span>`;
                                     break;
                             }
                             html += `
