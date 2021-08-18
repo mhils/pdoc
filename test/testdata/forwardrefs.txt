@@ -1,0 +1,6 @@
+<module forwardrefs
+    <function def fun(arg: 'turtle.Turtle', arg2: 'Turtle') -> None: ...  # turtles all the way …>
+    <var TurtleAlias1: TypeAlias = 'Turtle'  # An alias for turtles…>
+    <var TurtleAlias2 = 'turtle.Turtle'  # Another alias for tu…>
+    <function def alias1(x: 'TurtleAlias1'): ...  # A function with the …>
+    <function def alias2(x: 'TurtleAlias2'): ...  # A function with the …>>

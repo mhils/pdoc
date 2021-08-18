@@ -1,0 +1,6 @@
+<module forwardrefs2
+    <function def foo(a: 'forwardrefs.TurtleAlias1'): ...  # Turtles from another…>
+    <function def bar(a: 'forwardrefs.TurtleAlias1'): ...  # More turtles.>
+    <function def baz(a: 'Optional[forwardrefs.TurtleAlias1]'): ...  # Even more turtles.>
+    <function def qux(a: 'TurtleAlias1'): ...  # Even more turtles.>
+    <function def quux(a: 'MoreAlias'): ...  # Even more turtles.>>
