@@ -14,6 +14,7 @@ class NamedTupleExample(NamedTuple):
     """
     An example for a typing.NamedTuple.
     """
+
     name: str
     """Name of our example tuple."""
     id: int = 3

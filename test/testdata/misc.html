@@ -246,6 +246,7 @@ misc    </h1>
 
 <span class="c1"># Testing function and object default values</span>
 
+
 <span class="k">def</span> <span class="nf">default_func</span><span class="p">():</span>
     <span class="k">pass</span>
 
@@ -258,10 +259,7 @@ misc    </h1>
 <span class="sd">&quot;&quot;&quot;this just render like a normal function&quot;&quot;&quot;</span>
 
 
-<span class="k">def</span> <span class="nf">func_with_defaults</span><span class="p">(</span>
-    <span class="n">a</span><span class="o">=</span><span class="n">default_obj</span><span class="p">,</span>
-    <span class="n">b</span><span class="o">=</span><span class="n">default_func</span>
-<span class="p">):</span>
+<span class="k">def</span> <span class="nf">func_with_defaults</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">default_obj</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">default_func</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;this shouldn&#39;t render object or function addresses&quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
@@ -302,6 +300,7 @@ misc    </h1>
 
 
 <span class="c1"># Testing docstring inheritance</span>
+
 
 <span class="k">class</span> <span class="nc">Base</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -607,10 +606,7 @@ misc    </h1>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">func_with_defaults</span><span class="p">(</span>
-    <span class="n">a</span><span class="o">=</span><span class="n">default_obj</span><span class="p">,</span>
-    <span class="n">b</span><span class="o">=</span><span class="n">default_func</span>
-<span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">func_with_defaults</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">default_obj</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">default_func</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;this shouldn&#39;t render object or function addresses&quot;&quot;&quot;</span>
     <span class="k">pass</span>
 </pre></div>

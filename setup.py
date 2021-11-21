@@ -61,6 +61,7 @@ setup(
             "flake8",
             "hypothesis",
             "mypy",
+            "pre-commit",
             "pytest",
             "pytest-cov",
             "pytest-timeout",
