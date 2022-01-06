@@ -19,5 +19,5 @@ It is generated as follows:
 pygmentize -f html -a .pdoc -S <theme> > syntax-highlighting.css
 ```
 
-The default theme is `default`. Alternative color schemes can be tested on 
-[the Pygments website](https://pygments.org/demo/).
+The default theme is `default`, with extended padding added to the `.linenos` class.
+Alternative color schemes can be tested on [the Pygments website](https://pygments.org/demo/).

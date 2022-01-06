@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import os
-import re
-from contextlib import contextmanager
-from typing import Collection, Mapping, Optional
-from unittest.mock import patch
-
 import pygments.formatters.html
 import pygments.lexers.python
+import re
+import warnings
+from contextlib import contextmanager
 from jinja2 import ext, nodes
+from typing import Collection, Mapping, Optional
+from unittest.mock import patch
 
 try:
     # Jinja2 >= 3.0
@@ -27,7 +27,11 @@ lexer = pygments.lexers.python.PythonLexer()
 The pygments lexer used for pdoc.render_helpers.highlight.
 Overwrite this to configure pygments lexing.
 """
-formatter = pygments.formatters.html.HtmlFormatter(cssclass="codehilite")
+formatter = pygments.formatters.html.HtmlFormatter(
+    cssclass="codehilite",
+    linenos="inline",
+    anchorlinenos=True,
+)
 """
 The pygments formatter used for pdoc.render_helpers.highlight. 
 Overwrite this to configure pygments highlighting.
@@ -52,9 +56,19 @@ Overwrite this to configure Markdown rendering.
 
 
 @cache
-def highlight(code: str) -> str:
-    """Highlight a piece of Python code using pygments."""
-    return Markup(pygments.highlight(code, lexer, formatter))
+def highlight(doc: pdoc.doc.Doc) -> str:
+    """Highlight the source code of a documentation object using pygments."""
+    if isinstance(doc, str):  # pragma: no cover
+        warnings.warn(
+            "Passing a string to the `highlight` render helper is deprecated, pass a pdoc.doc.Doc object instead.",
+            DeprecationWarning,
+        )
+        return Markup(pygments.highlight(doc, lexer, formatter))
+
+    # set up correct line numbers and anchors
+    formatter.linespans = doc.qualname or "L"
+    formatter.linenostart = doc.source_lines[0] if doc.source_lines else 1
+    return Markup(pygments.highlight(doc.source, lexer, formatter))
 
 
 @cache
