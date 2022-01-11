@@ -5,6 +5,11 @@ and works without any third-party services in a privacy-preserving way. When a u
 search box for the first time, pdoc will fetch the search index (`search.js`) and use that to
 answer all upcoming queries.
 
+##### Search Coverage
+
+The search functionality covers all documented elements and their docstrings.
+While you may find a function using its name, arguments, or argument type annotations,
+
 ##### Search Performance
 
 pdoc uses [Elasticlunr.js](https://github.com/weixsong/elasticlunr.js) to implement search. To improve end user
@@ -64,7 +69,7 @@ def make_index(
 
         def make_item(doc: pdoc.doc.Doc, **kwargs) -> dict[str, str]:
             # TODO: We could be extra fancy here and split `doc.docstring` by toc sections.
-            return {
+            ret = {
                 "fullname": doc.fullname,
                 "modulename": doc.modulename,
                 "qualname": doc.qualname,
@@ -72,22 +77,34 @@ def make_index(
                 "doc": to_html(to_markdown(doc.docstring, mod, default_docformat)),
                 **kwargs,
             }
+            return {k: v for k, v in ret.items() if v}
 
-        def make_index(mod: pdoc.doc.Namespace):
+        # TODO: Instead of building our own JSON objects here we could also use module.html.jinja2's member()
+        #  implementation to render HTML for each documentation object and then implement a elasticlunr tokenizer that
+        #  removes HTML. It wouldn't be great for search index size, but the rendered search entries would be fully
+        #  consistent.
+        def make_index(mod: pdoc.doc.Namespace, **extra):
             if not is_public(mod):
                 return
-            yield make_item(mod)
+            yield make_item(mod, **extra)
             for m in mod.own_members:
                 if isinstance(m, pdoc.doc.Variable) and is_public(m):
-                    yield make_item(m)
+                    yield make_item(
+                        m,
+                        annotation=m.annotation_str,
+                        default_value=m.default_value_str,
+                    )
                 elif isinstance(m, pdoc.doc.Function) and is_public(m):
                     yield make_item(
                         m,
-                        parameters=list(m.signature.parameters),
+                        signature=str(m.signature),
                         funcdef=m.funcdef,
                     )
                 elif isinstance(m, pdoc.doc.Class):
-                    yield from make_index(m)
+                    yield from make_index(
+                        m,
+                        bases=", ".join(x[2] for x in m.bases),
+                    )
                 else:
                     pass
 
