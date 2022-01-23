@@ -387,7 +387,7 @@ from pdoc._compat import Literal
 def pdoc(
     *modules: Union[Path, str],
     output_directory: None = None,
-    format: Literal["html"] = "html",
+    format: Literal["html", "md"] = "html",
 ) -> str:
     pass
 
@@ -396,7 +396,7 @@ def pdoc(
 def pdoc(
     *modules: Union[Path, str],
     output_directory: Path,
-    format: Literal["html"] = "html",
+    format: Literal["html", "md"] = "html",
 ) -> None:
     pass
 
@@ -404,7 +404,7 @@ def pdoc(
 def pdoc(
     *modules: Union[Path, str],
     output_directory: Optional[Path] = None,
-    format: Literal["html"] = "html",
+    format: Literal["html", "md"] = "html",
 ) -> Optional[str]:
     """
     Render the documentation for a list of modules.
@@ -416,12 +416,8 @@ def pdoc(
 
     Rendering options can be configured by calling `pdoc.render.configure` in advance.
     """
-    if format not in ("html", "markdown", "repr"):
+    if format not in ("html", "md", "repr"):
         raise ValueError(f"Invalid rendering format {format!r}.")
-    if format == "markdown":  # pragma: no cover
-        raise NotImplementedError(
-            "Markdown support is currently unimplemented, but PRs are welcome!"
-        )
 
     all_modules: dict[str, doc.Module] = {}
     for module_name in extract.walk_specs(modules):
@@ -436,13 +432,15 @@ def pdoc(
     for module in all_modules.values():
         if format == "html":
             out = render.html_module(module, all_modules)
+        elif format == "md":
+            out = render.markdown_module(module, all_modules)
         else:
             out = render.repr_module(module)
 
         if not output_directory:
             return out
         else:
-            outfile = output_directory / f"{module.fullname.replace('.', '/')}.html"
+            outfile = output_directory / f"{module.fullname.replace('.', '/')}.{format}"
             outfile.parent.mkdir(parents=True, exist_ok=True)
             outfile.write_bytes(out.encode())
 

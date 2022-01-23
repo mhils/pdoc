@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import types
 from collections.abc import Mapping
 from typing import Optional
 
 import pytest
 
+import pdoc
 from pdoc.render_helpers import (
     edit_url,
     qualname_candidates,
@@ -62,7 +64,10 @@ def test_qualname_candidates(context, candidates):
 def test_edit_url(
     modulename: str, is_package: bool, mapping: Mapping[str, str], result: Optional[str]
 ):
-    assert edit_url(modulename, is_package, mapping) == result
+    mod = pdoc.doc.Module(types.ModuleType(""))
+    mod.modulename = modulename
+    mod.is_package = is_package
+    assert edit_url(mod, mapping) == result
 
 
 @pytest.mark.parametrize(

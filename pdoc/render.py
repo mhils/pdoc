@@ -81,7 +81,7 @@ def html_module(
     mtime: Optional[str] = None,
 ) -> str:
     """
-    Renders the documentation for a `pdoc.doc.Module`.
+    Renders the HTML documentation for a `pdoc.doc.Module`.
 
     - `all_modules` contains all modules that are rendered in this invocation.
       This is used to determine which identifiers should be linked and which should not.
@@ -92,13 +92,30 @@ def html_module(
         return env.get_template("module.html.jinja2").render(
             module=module,
             all_modules=all_modules,
-            mtime=mtime,
-            edit_url=edit_url(
-                module.modulename,
-                module.is_package,
-                cast(Mapping[str, str], env.globals["edit_url_map"]),
-            ),
             root_module_name=root_module_name(all_modules),
+            edit_url=edit_url(
+                module, cast(Mapping[str, str], env.globals["edit_url_map"])
+            ),
+            mtime=mtime,
+        )
+
+
+def markdown_module(
+    module: pdoc.doc.Module,
+    all_modules: Mapping[str, pdoc.doc.Module],
+) -> str:
+    """
+    Renders the Markdown documentation for a `pdoc.doc.Module`.
+    """
+    with defuse_unsafe_reprs():
+        return env.get_template("module.md.jinja2").render(
+            module=module,
+            all_modules=all_modules,
+            root_module_name=root_module_name(all_modules),
+            edit_url=edit_url(
+                module, cast(Mapping[str, str], env.globals["edit_url_map"])
+            ),
+            markdown=True
         )
 
 
@@ -106,6 +123,7 @@ def html_index(all_modules: Mapping[str, pdoc.doc.Module]) -> str:
     """Renders the module index."""
     return env.get_template("index.html.jinja2").render(
         all_modules=all_modules,
+        root_module_name=root_module_name(all_modules),
     )
 
 

@@ -134,6 +134,13 @@ def qualname_candidates(identifier: str, context_qualname: str) -> list[str]:
     return ret
 
 
+def _link(text: str, url: str, markdown: bool) -> str:
+    if markdown:
+        return f'[{text}]({url})'
+    else:
+        return f'<a href="{url}">{text}</a>'
+
+
 @pass_context
 def linkify(context: Context, code: str, namespace: str = "") -> str:
     """
@@ -161,7 +168,11 @@ def linkify(context: Context, code: str, namespace: str = "") -> str:
         else:
             if qualname:
                 qualname = f"#{qualname}"
-            return f'<a href="{relative_link(context["module"].modulename, module)}{qualname}">{text}</a>'
+            return _link(
+                text,
+                f'{relative_link(context["module"].modulename, module)}{qualname}',
+                context.get("markdown", False)
+            )
 
     # - (?!/) to not match on http://example.com/
     # - (?!</a>) to not match existing URLs.
@@ -208,20 +219,23 @@ def link(context: Context, spec: tuple[str, str], text: Optional[str] = None) ->
     if qualname:
         qualname = f"#{qualname}"
     if modulename in context["all_modules"]:
-        return Markup(
-            f'<a href="{relative_link(context["module"].modulename, modulename)}{qualname}">{text or fullname}</a>'
-        )
+        return Markup(_link(
+            text or fullname,
+            f'{relative_link(context["module"].modulename, modulename)}{qualname}',
+            context.get("markdown", False)
+        ))
     return text or fullname
 
 
 def edit_url(
-    modulename: str, is_package: bool, mapping: Mapping[str, str]
+    module: pdoc.doc.Module,
+    mapping,
 ) -> Optional[str]:
     """Create a link to edit a particular file in the used version control system."""
     for m, prefix in mapping.items():
-        if m == modulename or modulename.startswith(f"{m}."):
-            filename = modulename[len(m) + 1 :].replace(".", "/")
-            if is_package:
+        if m == module.modulename or module.modulename.startswith(f"{m}."):
+            filename = module.modulename[len(m) + 1 :].replace(".", "/")
+            if module.is_package:
                 filename = f"{filename}/__init__.py".lstrip("/")
             else:
                 filename += ".py"
@@ -229,8 +243,7 @@ def edit_url(
     return None
 
 
-@cache
-def root_module_name(all_modules: dict[str, pdoc.doc.Module]) -> Optional[str]:
+def root_module_name(all_modules: Mapping[str, pdoc.doc.Module]) -> Optional[str]:
     """
     Return the name of the (unique) top-level module, or `None`
     if no such module exists.

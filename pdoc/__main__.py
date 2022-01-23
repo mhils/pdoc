@@ -45,12 +45,14 @@ mainargs.add_argument(
     type=Path,
     help="Write rendered documentation to the specified directory, don't start a webserver.",
 )
-# may be added again in the future:
-# formats = parser.add_mutually_exclusive_group()
-# formats.add_argument("--html", dest="format", action="store_const", const="html")
-# formats.add_argument(
-#     "--markdown", dest="format", action="store_const", const="markdown"
-# )
+mainargs.add_argument(
+    "-f",
+    "--format",
+    type=str,
+    default="html",
+    choices=("html", "md"),
+    help="The output file format.",
+)
 
 renderopts = parser.add_argument_group(f"{white}Customize Rendering{default}")
 renderopts.add_argument(
@@ -184,7 +186,7 @@ def cli(args: list[str] = None) -> None:
         pdoc.pdoc(
             *opts.modules,
             output_directory=opts.output_directory,
-            format="html",  # opts.format or
+            format=opts.format,
         )
         return
     else:
