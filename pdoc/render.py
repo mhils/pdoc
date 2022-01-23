@@ -83,7 +83,7 @@ def html_module(
     """
     Renders the documentation for a `pdoc.doc.Module`.
 
-    - `all_modules` is a list of all modules that are rendered in this invocation.
+    - `all_modules` contains all modules that are rendered in this invocation.
       This is used to determine which identifiers should be linked and which should not.
     - If `mtime` is given, include additional JavaScript on the page for live-reloading.
       This is only passed by `pdoc.web`.
@@ -98,6 +98,7 @@ def html_module(
                 module.is_package,
                 cast(Mapping[str, str], env.globals["edit_url_map"]),
             ),
+            root_module_name=root_module_name(all_modules),
         )
 
 
@@ -174,5 +175,4 @@ env.filters["link"] = link
 env.filters["minify_css"] = minify_css
 env.globals["__version__"] = pdoc.__version__
 env.globals["env"] = os.environ
-env.globals["root_module_name"] = root_module_name
 configure()  # add default globals
