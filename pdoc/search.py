@@ -43,6 +43,8 @@ in your [`module.html.jinja2` template](../pdoc.html#edit-pdocs-html-template).
 """
 from __future__ import annotations
 
+import html
+
 import json
 import shutil
 import subprocess
@@ -51,7 +53,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import pdoc.doc
-from pdoc.render_helpers import to_html, to_markdown
+from pdoc.render_helpers import to_html, to_markdown, format_signature
 
 
 def make_index(
@@ -91,15 +93,21 @@ def make_index(
                 if isinstance(m, pdoc.doc.Variable) and is_public(m):
                     yield make_item(
                         m,
-                        annotation=m.annotation_str,
-                        default_value=m.default_value_str,
+                        annotation=html.escape(m.annotation_str),
+                        default_value=html.escape(m.default_value_str),
                     )
                 elif isinstance(m, pdoc.doc.Function) and is_public(m):
-                    yield make_item(
-                        m,
-                        signature=str(m.signature),
-                        funcdef=m.funcdef,
-                    )
+                    if m.name == "__init__":
+                        yield make_item(
+                            m,
+                            signature=format_signature(m.signature_without_self, False),
+                        )
+                    else:
+                        yield make_item(
+                            m,
+                            signature=format_signature(m.signature, True),
+                            funcdef=m.funcdef,
+                        )
                 elif isinstance(m, pdoc.doc.Class):
                     yield from make_index(
                         m,
