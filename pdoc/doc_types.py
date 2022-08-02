@@ -10,6 +10,7 @@ from __future__ import annotations
 import functools
 import inspect
 import operator
+import re
 import sys
 import types
 import typing
@@ -19,7 +20,7 @@ from typing import Any, TYPE_CHECKING
 from typing import _GenericAlias  # type: ignore
 
 from . import extract
-from ._compat import GenericAlias, Literal, UnionType, get_origin
+from ._compat import GenericAlias, Literal, UnionType, formatannotation, get_origin
 from .doc_ast import type_checking_sections
 
 if TYPE_CHECKING:
@@ -194,3 +195,45 @@ def _eval_type(t, globalns, localns, recursive_guard=frozenset()):
             return t.copy_with(ev_args)
     return t
     # ✂ end ✂
+    # fmt: on
+
+
+class _AnnotationReplacer:
+    replacements: dict[str, str]
+    rex: re.Pattern | None = None
+
+    numpy: bool = False
+
+    def __init__(self):
+        self.replacements = {}
+
+    def recompile(self) -> None:
+        self.rex = re.compile("|".join(re.escape(k) for k in self.replacements))
+
+    def __call__(self, text: str) -> str:
+        """
+        Shorten an annotation string.
+
+        Some libraries (e.g. numpy) make extensive use of long type unions
+        (see <https://github.com/mitmproxy/pdoc/issues/420>). While we cannot
+        fix this in the general case, we can manually fix some common cases to make them more readable.
+        """
+        recompile = False
+
+        if "numpy.typing" in sys.modules and not self.numpy:
+            from numpy.typing import ArrayLike, DTypeLike
+
+            self.replacements[formatannotation(ArrayLike)] = "npt.ArrayLike"
+            self.replacements[formatannotation(DTypeLike)] = "npt.DTypeLike"
+            self.numpy = recompile = True
+
+        # Add more replacements here.
+
+        if recompile:
+            self.recompile()
+        if self.rex:
+            text = self.rex.sub(lambda m: self.replacements[m.group(0)], text)
+        return text
+
+
+simplify_annotation = _AnnotationReplacer().__call__

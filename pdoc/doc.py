@@ -40,6 +40,7 @@ from pdoc.doc_types import (
     empty,
     resolve_annotations,
     safe_eval_type,
+    simplify_annotation,
 )
 
 from ._compat import cache, cached_property, formatannotation, get_origin
@@ -1014,7 +1015,7 @@ class Variable(Doc[None]):
     def annotation_str(self) -> str:
         """The variable's type annotation as a pretty-printed str."""
         if self.annotation is not empty:
-            return f": {formatannotation(self.annotation)}"
+            return f": {simplify_annotation(formatannotation(self.annotation))}"
         else:
             return ""
 
@@ -1040,7 +1041,9 @@ class _PrettySignature(inspect.Signature):
         render_pos_only_separator = False
         render_kw_only_separator = True
         for param in self.parameters.values():
-            formatted = re.sub(r" at 0x[0-9a-fA-F]+(?=>$)", "", str(param))
+            formatted = simplify_annotation(
+                re.sub(r" at 0x[0-9a-fA-F]+(?=>$)", "", str(param))
+            )
 
             kind = param.kind
 
@@ -1077,7 +1080,7 @@ class _PrettySignature(inspect.Signature):
 
     def _return_annotation_str(self) -> str:
         if self.return_annotation is not empty:
-            return formatannotation(self.return_annotation)
+            return simplify_annotation(formatannotation(self.return_annotation))
         else:
             return ""
 
