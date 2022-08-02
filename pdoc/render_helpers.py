@@ -5,6 +5,7 @@ import html
 import inspect
 import os
 import re
+import typing
 import warnings
 from collections.abc import Collection, Iterable, Mapping
 from contextlib import contextmanager
@@ -110,14 +111,43 @@ def highlight(doc: pdoc.doc.Doc) -> str:
     return Markup(pygments.highlight(doc.source, lexer, formatter))
 
 
-def format_signature(sig: inspect.Signature, colon: bool) -> str:
+@pass_context
+def format_signature(
+    context: Context, sig: pdoc.doc._PrettySignature, colon: bool
+) -> str:
     """Format and highlight a function signature using pygments. Returns HTML."""
     # First get a list with all params as strings.
-    result = pdoc.doc._PrettySignature._params(sig)  # type: ignore
+
+    def formatanno(param: pdoc.doc._PrettyParameter) -> str:
+        if re.search("[|\[]", param.annotation_text) and a := typing.get_args(param.annotation):
+            # Crude hack to detect custom concatenations?
+            print(f"AAAA {a=}")
+        identifier, *rest = re.split(r"(?=[^a-zA-Z0-9_.])", param.annotation_text, maxsplit=1)
+        print(f"{identifier=} {rest=}")
+
+        mod: pdoc.doc.Module = context["module"]
+        for qualname in qualname_candidates(identifier, ""):
+            doc = mod.get(qualname)
+            if doc and context["is_public"](doc).strip():
+                return doc.fullname + "".join(rest)
+
+        local_identifier, *id_rest = re.split(r"(?=\.)", identifier, maxsplit=1)
+        print(f"{local_identifier=} {id_rest=}")
+        s = context["module"].obj.__dict__[local_identifier]
+        modname = inspect.getmodule(s).__name__
+        print(f"{modname=}")
+        rest_id = modname + "".join(id_rest)
+        if m := try_link(rest_id, context):
+            return rest_id + "".join(rest)
+        if modname in ["builtins", "types", "typing"]:
+            return inspect.formatannotation(param.annotation)
+        return param.annotation_text
+
+    params = pdoc.doc._PrettySignature._params(sig, formatanno)  # type: ignore
     return_annot = pdoc.doc._PrettySignature._return_annotation_str(sig)  # type: ignore
 
     multiline = (
-        sum(len(x) + 2 for x in result) + len(return_annot)
+        sum(len(x) + 2 for x in params) + len(return_annot)
         > pdoc.doc._PrettySignature.MULTILINE_CUTOFF
     )
 
@@ -132,7 +162,7 @@ def format_signature(sig: inspect.Signature, colon: bool) -> str:
     # Next, individually highlight each parameter using pygments and wrap it in a span.param.
     # This later allows us to properly control line breaks.
     pretty_result = []
-    for i, param in enumerate(result):
+    for i, param in enumerate(params):
         pretty = _try_highlight(param)
         if multiline:
             pretty = f"""<span class="param">\t{pretty},</span>"""
@@ -269,6 +299,57 @@ def qualname_candidates(identifier: str, context_qualname: str) -> list[str]:
     return ret
 
 
+def try_link(text: str, context: Context, namespace: str = "") -> str | None:
+    plain_text = text.replace(
+        '</span><span class="o">.</span><span class="n">', "."
+    )
+    identifier = removesuffix(plain_text, "()")
+
+    # Check if this is a local reference within this module?
+    mod: pdoc.doc.Module = context["module"]
+    for qualname in qualname_candidates(identifier, namespace):
+        doc = mod.get(qualname)
+        if doc and context["is_public"](doc).strip():
+            return f'<a href="#{qualname}">{plain_text}</a>'
+
+    module = ""
+    qualname = ""
+    try:
+        # Check if the object we are interested in is imported and re-exposed in the current namespace.
+        for module, qualname in possible_sources(
+            context["all_modules"], identifier
+        ):
+            doc = mod.get(qualname)
+            if (
+                doc
+                and doc.taken_from == (module, qualname)
+                and context["is_public"](doc).strip()
+            ):
+                if plain_text.endswith("()"):
+                    plain_text = f"{doc.fullname}()"
+                else:
+                    plain_text = doc.fullname
+                return f'<a href="#{qualname}">{plain_text}</a>'
+    except ValueError:
+        # possible_sources did not find a parent module.
+        return None
+    else:
+        # It's not, but we now know the parent module. Does the target exist?
+        doc = context["all_modules"][module]
+        if qualname:
+            assert isinstance(doc, pdoc.doc.Module)
+            doc = doc.get(qualname)
+        target_exists_and_public = (
+            doc is not None and context["is_public"](doc).strip()
+        )
+        if target_exists_and_public:
+            if qualname:
+                qualname = f"#{qualname}"
+            return f'<a href="{relative_link(context["module"].modulename, module)}{qualname}">{plain_text}</a>'
+        else:
+            return None
+
+
 @pass_context
 def linkify(context: Context, code: str, namespace: str = "") -> str:
     """
@@ -279,54 +360,7 @@ def linkify(context: Context, code: str, namespace: str = "") -> str:
 
     def linkify_repl(m: re.Match):
         text = m.group(0)
-        plain_text = text.replace(
-            '</span><span class="o">.</span><span class="n">', "."
-        )
-        identifier = removesuffix(plain_text, "()")
-
-        # Check if this is a local reference within this module?
-        mod: pdoc.doc.Module = context["module"]
-        for qualname in qualname_candidates(identifier, namespace):
-            doc = mod.get(qualname)
-            if doc and context["is_public"](doc).strip():
-                return f'<a href="#{qualname}">{plain_text}</a>'
-
-        module = ""
-        qualname = ""
-        try:
-            # Check if the object we are interested in is imported and re-exposed in the current namespace.
-            for module, qualname in possible_sources(
-                context["all_modules"], identifier
-            ):
-                doc = mod.get(qualname)
-                if (
-                    doc
-                    and doc.taken_from == (module, qualname)
-                    and context["is_public"](doc).strip()
-                ):
-                    if plain_text.endswith("()"):
-                        plain_text = f"{doc.fullname}()"
-                    else:
-                        plain_text = doc.fullname
-                    return f'<a href="#{qualname}">{plain_text}</a>'
-        except ValueError:
-            # possible_sources did not find a parent module.
-            return text
-        else:
-            # It's not, but we now know the parent module. Does the target exist?
-            doc = context["all_modules"][module]
-            if qualname:
-                assert isinstance(doc, pdoc.doc.Module)
-                doc = doc.get(qualname)
-            target_exists_and_public = (
-                doc is not None and context["is_public"](doc).strip()
-            )
-            if target_exists_and_public:
-                if qualname:
-                    qualname = f"#{qualname}"
-                return f'<a href="{relative_link(context["module"].modulename, module)}{qualname}">{plain_text}</a>'
-            else:
-                return text
+        return try_link(text, context, namespace) or text
 
     return Markup(
         re.sub(

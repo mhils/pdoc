@@ -31,7 +31,7 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
-from typing import Any, ClassVar, Generic, TypeVar, Union
+from typing import Annotated, Any, ClassVar, Generic, TypeVar, Union
 
 from pdoc import doc_ast, doc_pyi, extract
 from pdoc.doc_types import (
@@ -592,7 +592,7 @@ class Class(Namespace[type]):
                 attr: unresolved_annotation
                 for attr, unresolved_annotation in cls_annotations.items()
                 if attr not in annotations
-                or annotations[attr][0] is not unresolved_annotation
+                   or annotations[attr][0] is not unresolved_annotation
             }
             for attr, t in resolve_annotations(
                 new_annotations, inspect.getmodule(cls), cls_fullname
@@ -775,8 +775,8 @@ class Class(Namespace[type]):
             x
             for x in self.members.values()
             if isinstance(x, Function)
-            and not x.is_staticmethod
-            and not x.is_classmethod
+               and not x.is_staticmethod
+               and not x.is_classmethod
         ]
 
 
@@ -891,7 +891,7 @@ class Function(Doc[types.FunctionType]):
             return "def"
 
     @cached_property
-    def signature(self) -> inspect.Signature:
+    def signature(self) -> _PrettySignature:
         """
         The function's signature.
 
@@ -904,11 +904,11 @@ class Function(Doc[types.FunctionType]):
         if self.obj is object.__init__:
             # there is a weird edge case were inspect.signature returns a confusing (self, /, *args, **kwargs)
             # signature for the default __init__ method.
-            return inspect.Signature()
+            return _PrettySignature()
         try:
             sig = _PrettySignature.from_callable(self.obj)
         except Exception:
-            return inspect.Signature(
+            return _PrettySignature(
                 [inspect.Parameter("unknown", inspect.Parameter.POSITIONAL_OR_KEYWORD)]
             )
         mod = inspect.getmodule(self.obj)
@@ -917,12 +917,14 @@ class Function(Doc[types.FunctionType]):
         if self.name == "__init__":
             sig = sig.replace(return_annotation=empty)
         else:
+            sig.return_annotation_text = sig.return_annotation
             sig = sig.replace(
                 return_annotation=safe_eval_type(
                     sig.return_annotation, globalns, mod, self.fullname
                 )
             )
         for p in sig.parameters.values():
+            p.annotation_text = p.annotation
             p._annotation = safe_eval_type(p.annotation, globalns, mod, self.fullname)  # type: ignore
         return sig
 
@@ -1019,28 +1021,68 @@ class Variable(Doc[None]):
             return ""
 
 
+class _PrettyParameter(inspect.Parameter):
+    __slots__ = inspect.Parameter.__slots__ + ("annotation_text",)
+    def format(self, formatannotation: Callable[[_PrettyParameter], str] = lambda p: formatannotation(p.annotation)):
+        # redeclared here to keep code snipped below as-is.
+        _VAR_POSITIONAL = inspect.Parameter.VAR_POSITIONAL
+        _VAR_KEYWORD = inspect.Parameter.VAR_KEYWORD
+        _empty = empty
+
+        # https://github.com/python/cpython/blob/8e1952aaaf381d8ce35bc95e770a9f17e3f305fb/Lib/inspect.py#L2715-L2734
+        # Change: formatannotation(self._annotation) -> formatannotation(self)
+        # ✂ start ✂
+        kind = self.kind
+        formatted = self._name
+
+        # Add annotation and default value
+        if self._annotation is not _empty:
+            formatted = '{}: {}'.format(formatted,
+                                        formatannotation(self))
+
+        if self._default is not _empty:
+            if self._annotation is not _empty:
+                formatted = '{} = {}'.format(formatted, repr(self._default))
+            else:
+                formatted = '{}={}'.format(formatted, repr(self._default))
+
+        if kind == _VAR_POSITIONAL:
+            formatted = '*' + formatted
+        elif kind == _VAR_KEYWORD:
+            formatted = '**' + formatted
+
+        return formatted
+        # ✂ end ✂
+
+
+
 class _PrettySignature(inspect.Signature):
     """
     A subclass of `inspect.Signature` that pads __str__ over several lines
     for complex signatures.
     """
 
+    __slots__ = inspect.Signature.__slots__ + ("return_annotation_text",)
+
+    _parameter_cls = _PrettyParameter
+    parameters: types.MappingProxyType[str, _PrettyParameter]
+
     MULTILINE_CUTOFF = 70
 
-    def _params(self) -> list[str]:
+    def _params(self, format_annotation: Callable[[_PrettyParameter], str] = lambda p: formatannotation(p.annotation)) -> list[str]:
         # redeclared here to keep code snipped below as-is.
         _POSITIONAL_ONLY = inspect.Parameter.POSITIONAL_ONLY
         _VAR_POSITIONAL = inspect.Parameter.VAR_POSITIONAL
         _KEYWORD_ONLY = inspect.Parameter.KEYWORD_ONLY
 
         # https://github.com/python/cpython/blob/799f8489d418b7f9207d333eac38214931bd7dcc/Lib/inspect.py#L3083-L3117
-        # Change: added re.sub() to formatted = ....
+        # Change: added format_param to formatted = ....
         # ✂ start ✂
         result = []
         render_pos_only_separator = False
         render_kw_only_separator = True
         for param in self.parameters.values():
-            formatted = re.sub(r" at 0x[0-9a-fA-F]+(?=>$)", "", str(param))
+            formatted = param.format(format_annotation)
 
             kind = param.kind
 
