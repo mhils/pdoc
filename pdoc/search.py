@@ -95,12 +95,12 @@ def make_index(
                     if m.name == "__init__":
                         yield make_item(
                             m,
-                            signature=format_signature(m.signature_without_self, False),
+                            signature=format_signature({"module": mod}, m.signature_without_self, False),
                         )
                     else:
                         yield make_item(
                             m,
-                            signature=format_signature(m.signature, True),
+                            signature=format_signature({"module": mod}, m.signature, True),
                             funcdef=m.funcdef,
                         )
                 elif isinstance(m, pdoc.doc.Class):

@@ -7,9 +7,12 @@ exception.
 """
 from __future__ import annotations
 
+import builtins
 import functools
 import inspect
 import operator
+import re
+import secrets
 import sys
 import types
 import typing
@@ -19,7 +22,7 @@ from typing import Any, TYPE_CHECKING
 from typing import _GenericAlias  # type: ignore
 
 from . import extract
-from ._compat import GenericAlias, Literal, UnionType, get_origin
+from ._compat import GenericAlias, Literal, UnionType, get_origin, formatannotation
 from .doc_ast import type_checking_sections
 
 if TYPE_CHECKING:
@@ -194,3 +197,62 @@ def _eval_type(t, globalns, localns, recursive_guard=frozenset()):
             return t.copy_with(ev_args)
     return t
     # ✂ end ✂
+
+def better_format_annotation(
+    annotation: str | type,
+    globalns,
+) -> str:
+
+    if not isinstance(annotation, str):
+        annotation = formatannotation(annotation)
+
+    literals = {}
+
+    def store_literals(m: re.Match) -> str:
+        t = secrets.token_hex()
+        literals[t] = m[0]
+        return t
+
+    annotation = re.sub(r"""(typing\.)?Literal\[.+?]""", store_literals, annotation)
+    annotation = re.sub(r"ForwardRef\('(.+?)'\)", r"\1", annotation)
+    annotation = re.sub(r"""['"]""", "", annotation)
+
+    def resolve_identifier(m: re.Match) -> str:
+        head, _, tail = m[0].partition(".")
+
+        print(f"{annotation=} {m[0]=}")
+
+        if literal := literals.get(head):
+            return literal
+        elif head in globalns:
+            x = globalns[head]
+
+            print(f"{x=}")
+
+            if x in (typing, builtins, types):
+                ret = tail
+            elif isinstance(x, types.ModuleType):
+                ret = f"{x.__name__}.{tail}"
+            elif x.__module__ in ("builtins", "typing", "types"):
+                ret = f"{head}.{tail}"
+            else:
+                ret = f"{x.__module__}.{head}.{tail}"
+
+            return ret.removesuffix('.')
+        elif head in builtins.__dict__:
+            return m[0]
+        else:
+            return m[0]
+
+    return re.sub(
+        r"""[a-zA-Z0-9_.]+""",
+        resolve_identifier,
+        annotation,
+    )
+
+
+def expand_module_names(
+    annotation: type | str,
+    module: types.ModuleType,
+):
+    pass

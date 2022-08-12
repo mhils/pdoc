@@ -8,11 +8,15 @@ import re
 import warnings
 from collections.abc import Collection, Iterable, Mapping
 from contextlib import contextmanager
+from typing import Callable
 from unittest.mock import patch
 
 import pygments.formatters
 import pygments.lexers
 from jinja2 import ext, nodes
+
+from .doc import _safe_getattr
+from .doc_types import better_format_annotation, empty
 
 try:
     # Jinja2 >= 3.0
@@ -110,11 +114,119 @@ def highlight(doc: pdoc.doc.Doc) -> str:
     return Markup(pygments.highlight(doc.source, lexer, formatter))
 
 
-def format_signature(sig: inspect.Signature, colon: bool) -> str:
+def format_param(
+    param: inspect.Parameter,
+    formatannotation: Callable[[inspect.Parameter], str]
+):
+    # redeclared here to keep code snipped below as-is.
+    _VAR_POSITIONAL = inspect.Parameter.VAR_POSITIONAL
+    _VAR_KEYWORD = inspect.Parameter.VAR_KEYWORD
+    _empty = empty
+
+    # https://github.com/python/cpython/blob/8e1952aaaf381d8ce35bc95e770a9f17e3f305fb/Lib/inspect.py#L2715-L2734
+    # Change: formatannotation(self._annotation) -> formatannotation(self)
+    # ✂ start ✂
+    kind = param.kind
+    formatted = param._name
+
+    # Add annotation and default value
+    if param._annotation is not _empty:
+        formatted = '{}: {}'.format(formatted, formatannotation(param))
+
+    if param._default is not _empty:
+        if param._annotation is not _empty:
+            formatted = '{} = {}'.format(formatted, repr(param._default))
+        else:
+            formatted = '{}={}'.format(formatted, repr(param._default))
+
+    if kind == _VAR_POSITIONAL:
+        formatted = '*' + formatted
+    elif kind == _VAR_KEYWORD:
+        formatted = '**' + formatted
+
+    return formatted
+    # ✂ end ✂
+
+def format_params(
+    sig: inspect.Signature,
+    formatannotation: Callable[[inspect.Parameter], str]
+) -> list[str]:
+    # redeclared here to keep code snipped below as-is.
+    _POSITIONAL_ONLY = inspect.Parameter.POSITIONAL_ONLY
+    _VAR_POSITIONAL = inspect.Parameter.VAR_POSITIONAL
+    _KEYWORD_ONLY = inspect.Parameter.KEYWORD_ONLY
+
+    # https://github.com/python/cpython/blob/799f8489d418b7f9207d333eac38214931bd7dcc/Lib/inspect.py#L3083-L3117
+    # Change: added re.sub() to formatted = ....
+    # ✂ start ✂
+    result = []
+    render_pos_only_separator = False
+    render_kw_only_separator = True
+    for param in sig.parameters.values():
+        formatted = format_param(param, formatannotation)
+
+        kind = param.kind
+
+        if kind == _POSITIONAL_ONLY:
+            render_pos_only_separator = True
+        elif render_pos_only_separator:
+            # It's not a positional-only parameter, and the flag
+            # is set to 'True' (there were pos-only params before.)
+            result.append("/")
+            render_pos_only_separator = False
+
+        if kind == _VAR_POSITIONAL:
+            # OK, we have an '*args'-like parameter, so we won't need
+            # a '*' to separate keyword-only arguments
+            render_kw_only_separator = False
+        elif kind == _KEYWORD_ONLY and render_kw_only_separator:
+            # We have a keyword-only parameter to render and we haven't
+            # rendered an '*args'-like parameter before, so add a '*'
+            # separator to the parameters list ("foo(arg1, *, arg2)" case)
+            result.append("*")
+            # This condition should be only triggered once, so
+            # reset the flag
+            render_kw_only_separator = False
+
+        result.append(formatted)
+
+    if render_pos_only_separator:
+        # There were only positional-only parameters, hence the
+        # flag was not reset to 'False'
+        result.append("/")
+    # ✂ end ✂
+
+    return result
+
+
+@pass_context
+def format_signature(
+    context: Context,
+    sig: pdoc.doc._PrettySignature,
+    colon: bool,
+) -> str:
     """Format and highlight a function signature using pygments. Returns HTML."""
     # First get a list with all params as strings.
-    result = pdoc.doc._PrettySignature._params(sig)  # type: ignore
-    return_annot = pdoc.doc._PrettySignature._return_annotation_str(sig)  # type: ignore
+    mod: pdoc.doc.Module = context["module"]
+
+    globalns = _safe_getattr(mod.obj, "__dict__", {})
+
+    def formatanno(param: inspect.Parameter) -> str:
+        return better_format_annotation(param.annotation, globalns)
+
+    result = format_params(
+        sig,
+        formatanno,
+    )
+    result = [
+        re.sub(r" at 0x[0-9a-fA-F]+(?=>$)", "", x)
+        for x in result
+    ]
+
+    if sig.return_annotation is inspect.Signature.empty:
+        return_annot = ""
+    else:
+        return_annot = better_format_annotation(sig.return_annotation, globalns)
 
     multiline = (
         sum(len(x) + 2 for x in result) + len(return_annot)

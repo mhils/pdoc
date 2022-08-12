@@ -37,9 +37,8 @@ from pdoc import doc_ast, doc_pyi, extract
 from pdoc.doc_types import (
     GenericAlias,
     NonUserDefinedCallables,
-    empty,
-    resolve_annotations,
-    safe_eval_type,
+    better_format_annotation, empty,
+    expand_module_names,
 )
 
 from ._compat import cache, cached_property, formatannotation, get_origin, singledispatchmethod
@@ -404,9 +403,9 @@ class Module(Namespace[types.ModuleType]):
     def _var_annotations(self) -> dict[str, Any]:
         annotations = doc_ast.walk_tree(self.obj).annotations.copy()
         for k, v in _safe_getattr(self.obj, "__annotations__", {}).items():
-            annotations[k] = v
+            annotations.setdefault(k, v)
 
-        return resolve_annotations(annotations, self.obj, self.fullname)
+        return annotations
 
     def _taken_from(self, member_name: str, obj: Any) -> tuple[str, str]:
         if obj is empty:
@@ -571,35 +570,19 @@ class Class(Namespace[type]):
         return docstrings
 
     @cached_property
-    def _var_annotations(self) -> dict[str, type]:
-        # this is a bit tricky: __annotations__ also includes annotations from parent classes,
-        # but we need to execute them in the namespace of the parent class.
-        # Our workaround for this is to walk the MRO backwards, and only update/evaluate only if the annotation changes.
-        annotations: dict[
-            str, tuple[Any, type]
-        ] = {}  # attribute -> (annotation_unresolved, annotation_resolved)
+    def _var_annotations(self) -> dict[str, str | type]:
+        annotations: dict[str, str | type] = {}
         for cls in reversed(self.obj.__mro__):
-            cls_annotations = doc_ast.walk_tree(cls).annotations.copy()
+            for attr, annotation in doc_ast.walk_tree(cls).annotations.items():
+                annotations[attr] = annotation
+
+        for cls in self.obj.__mro__:
             dynamic_annotations = _safe_getattr(cls, "__annotations__", None)
             if isinstance(dynamic_annotations, dict):
-                for attr, unresolved_annotation in dynamic_annotations.items():
-                    cls_annotations[attr] = unresolved_annotation
-            cls_fullname = (
-                _safe_getattr(cls, "__module__", "") + "." + cls.__qualname__
-            ).lstrip(".")
+                for attr, annotation in dynamic_annotations.items():
+                    annotations.setdefault(attr, annotation)
 
-            new_annotations = {
-                attr: unresolved_annotation
-                for attr, unresolved_annotation in cls_annotations.items()
-                if attr not in annotations
-                or annotations[attr][0] is not unresolved_annotation
-            }
-            for attr, t in resolve_annotations(
-                new_annotations, inspect.getmodule(cls), cls_fullname
-            ).items():
-                annotations[attr] = (new_annotations[attr], t)
-
-        return {k: v[1] for k, v in annotations.items()}
+        return annotations
 
     @cached_property
     def _declarations(self) -> dict[str, tuple[str, str]]:
@@ -914,18 +897,17 @@ class Function(Doc[types.FunctionType]):
                 [inspect.Parameter("unknown", inspect.Parameter.POSITIONAL_OR_KEYWORD)]
             )
         mod = inspect.getmodule(self.obj)
-        globalns = _safe_getattr(mod, "__dict__", {})
 
         if self.name == "__init__":
             sig = sig.replace(return_annotation=empty)
         else:
             sig = sig.replace(
-                return_annotation=safe_eval_type(
-                    sig.return_annotation, globalns, mod, self.fullname
+                return_annotation=expand_module_names(
+                    sig.return_annotation, mod
                 )
             )
         for p in sig.parameters.values():
-            p._annotation = safe_eval_type(p.annotation, globalns, mod, self.fullname)  # type: ignore
+            p._annotation = expand_module_names(p.annotation, mod)  # type: ignore
         return sig
 
     @cached_property
@@ -1016,7 +998,7 @@ class Variable(Doc[None]):
     def annotation_str(self) -> str:
         """The variable's type annotation as a pretty-printed str."""
         if self.annotation is not empty:
-            return f": {formatannotation(self.annotation)}"
+            return f": {better_format_annotation(self.annotation, sys.modules[self.modulename].__dict__)}"
         else:
             return ""
 
