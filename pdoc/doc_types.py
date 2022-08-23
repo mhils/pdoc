@@ -198,16 +198,21 @@ def _eval_type(t, globalns, localns, recursive_guard=frozenset()):
     # fmt: on
 
 
-class _AnnotationReplacer:
+class AnnotationReplacer:
+    """A small helper to simplify type annotations."""
     replacements: dict[str, str]
     rex: re.Pattern | None = None
 
-    numpy: bool = False
+    _numpy: bool = False
 
     def __init__(self):
         self.replacements = {}
 
     def recompile(self) -> None:
+        """
+        Recompile the regular expression used to replace annotations.
+        Needs to be called after modifications to `replacements`.
+        """
         self.rex = re.compile("|".join(re.escape(k) for k in self.replacements))
 
     def __call__(self, text: str) -> str:
@@ -220,12 +225,12 @@ class _AnnotationReplacer:
         """
         recompile = False
 
-        if "numpy.typing" in sys.modules and not self.numpy:
+        if "numpy.typing" in sys.modules and not self._numpy:
             from numpy.typing import ArrayLike, DTypeLike
 
             self.replacements[formatannotation(ArrayLike)] = "npt.ArrayLike"
             self.replacements[formatannotation(DTypeLike)] = "npt.DTypeLike"
-            self.numpy = recompile = True
+            self._numpy = recompile = True
 
         # Add more replacements here.
 
@@ -236,4 +241,4 @@ class _AnnotationReplacer:
         return text
 
 
-simplify_annotation = _AnnotationReplacer().__call__
+simplify_annotation = AnnotationReplacer()
