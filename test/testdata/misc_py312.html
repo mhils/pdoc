@@ -24,6 +24,15 @@
             <h2>API Documentation</h2>
                 <ul class="memberlist">
             <li>
+                    <a class="class" href="#Issue809">Issue809</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="variable" href="#Issue809.NamedTupleExample">NamedTupleExample</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
                     <a class="variable" href="#MyType">MyType</a>
             </li>
             <li>
@@ -84,36 +93,86 @@ misc_py312    </h1>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="c1"># Testing the new Python 3.12 `type` statement.</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="nb">type</span> <span class="n">MyType</span> <span class="o">=</span> <span class="nb">int</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="sd">&quot;&quot;&quot;A custom Python 3.12 type.&quot;&quot;&quot;</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="n">foo</span><span class="p">:</span> <span class="n">MyType</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="sd">&quot;&quot;&quot;A custom type instance.&quot;&quot;&quot;</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="k">class</span><span class="w"> </span><span class="nc">Issue809</span><span class="p">:</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>    <span class="nd">@property</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">NamedTupleExample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NamedTupleExample</span><span class="p">:</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>        <span class="c1"># type annotation should refer to class below, not to the property itself.</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a>
 </span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="nb">type</span> <span class="n">MyTypeWithoutDocstring</span> <span class="o">=</span> <span class="nb">int</span>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a>
-</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a><span class="n">MyTypeClassic</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a><span class="sd">&quot;&quot;&quot;A &quot;classic&quot; typing.TypeAlias.&quot;&quot;&quot;</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="c1"># Testing the new Python 3.12 `type` statement.</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a><span class="nb">type</span> <span class="n">MyType</span> <span class="o">=</span> <span class="nb">int</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a><span class="sd">&quot;&quot;&quot;A custom Python 3.12 type.&quot;&quot;&quot;</span>
 </span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="c1"># Testing a typing.NamedTuple</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a><span class="c1"># we do not care very much about collections.namedtuple,</span>
-</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a><span class="c1"># the typing version is superior for documentation and a drop-in replacement.</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="n">foo</span><span class="p">:</span> <span class="n">MyType</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a><span class="sd">&quot;&quot;&quot;A custom type instance.&quot;&quot;&quot;</span>
+</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>
 </span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>
-</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a>
-</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a><span class="k">class</span><span class="w"> </span><span class="nc">NamedTupleExample</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a><span class="sd">    An example for a typing.NamedTuple.</span>
-</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a>
-</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of our example tuple.&quot;&quot;&quot;</span>
-</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a><span class="nb">type</span> <span class="n">MyTypeWithoutDocstring</span> <span class="o">=</span> <span class="nb">int</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a>
+</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="n">MyTypeClassic</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span>
+</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a><span class="sd">&quot;&quot;&quot;A &quot;classic&quot; typing.TypeAlias.&quot;&quot;&quot;</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>
+</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="c1"># Testing a typing.NamedTuple</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="c1"># we do not care very much about collections.namedtuple,</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a><span class="c1"># the typing version is superior for documentation and a drop-in replacement.</span>
+</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>
+</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>
+</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a><span class="k">class</span><span class="w"> </span><span class="nc">NamedTupleExample</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a><span class="sd">    An example for a typing.NamedTuple.</span>
+</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a>
+</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of our example tuple.&quot;&quot;&quot;</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
 </span></pre></div>
 
 
             </section>
+                <section id="Issue809">
+                            <input id="Issue809-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">Issue809</span>:
+
+                <label class="view-source-button" for="Issue809-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#Issue809"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="Issue809-14"><a href="#Issue809-14"><span class="linenos">14</span></a><span class="k">class</span><span class="w"> </span><span class="nc">Issue809</span><span class="p">:</span>
+</span><span id="Issue809-15"><a href="#Issue809-15"><span class="linenos">15</span></a>    <span class="nd">@property</span>
+</span><span id="Issue809-16"><a href="#Issue809-16"><span class="linenos">16</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">NamedTupleExample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NamedTupleExample</span><span class="p">:</span>
+</span><span id="Issue809-17"><a href="#Issue809-17"><span class="linenos">17</span></a>        <span class="c1"># type annotation should refer to class below, not to the property itself.</span>
+</span><span id="Issue809-18"><a href="#Issue809-18"><span class="linenos">18</span></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</span></pre></div>
+
+
+    
+
+                            <div id="Issue809.NamedTupleExample" class="classattr">
+                                        <input id="Issue809.NamedTupleExample-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr variable">
+            <span class="name">NamedTupleExample</span><span class="annotation">: <a href="#NamedTupleExample">NamedTupleExample</a></span>
+
+                <label class="view-source-button" for="Issue809.NamedTupleExample-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#Issue809.NamedTupleExample"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="Issue809.NamedTupleExample-15"><a href="#Issue809.NamedTupleExample-15"><span class="linenos">15</span></a>    <span class="nd">@property</span>
+</span><span id="Issue809.NamedTupleExample-16"><a href="#Issue809.NamedTupleExample-16"><span class="linenos">16</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">NamedTupleExample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NamedTupleExample</span><span class="p">:</span>
+</span><span id="Issue809.NamedTupleExample-17"><a href="#Issue809.NamedTupleExample-17"><span class="linenos">17</span></a>        <span class="c1"># type annotation should refer to class below, not to the property itself.</span>
+</span><span id="Issue809.NamedTupleExample-18"><a href="#Issue809.NamedTupleExample-18"><span class="linenos">18</span></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
+                </section>
                 <section id="MyType">
                     <div class="attr variable">
             <span class="def">type</span> <span class="name">MyType</span>        =
@@ -178,14 +237,14 @@ misc_py312    </h1>
 
     </div>
     <a class="headerlink" href="#NamedTupleExample"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="NamedTupleExample-31"><a href="#NamedTupleExample-31"><span class="linenos">31</span></a><span class="k">class</span><span class="w"> </span><span class="nc">NamedTupleExample</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-</span><span id="NamedTupleExample-32"><a href="#NamedTupleExample-32"><span class="linenos">32</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="NamedTupleExample-33"><a href="#NamedTupleExample-33"><span class="linenos">33</span></a><span class="sd">    An example for a typing.NamedTuple.</span>
-</span><span id="NamedTupleExample-34"><a href="#NamedTupleExample-34"><span class="linenos">34</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="NamedTupleExample-35"><a href="#NamedTupleExample-35"><span class="linenos">35</span></a>
-</span><span id="NamedTupleExample-36"><a href="#NamedTupleExample-36"><span class="linenos">36</span></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-</span><span id="NamedTupleExample-37"><a href="#NamedTupleExample-37"><span class="linenos">37</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of our example tuple.&quot;&quot;&quot;</span>
-</span><span id="NamedTupleExample-38"><a href="#NamedTupleExample-38"><span class="linenos">38</span></a>    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="NamedTupleExample-40"><a href="#NamedTupleExample-40"><span class="linenos">40</span></a><span class="k">class</span><span class="w"> </span><span class="nc">NamedTupleExample</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+</span><span id="NamedTupleExample-41"><a href="#NamedTupleExample-41"><span class="linenos">41</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="NamedTupleExample-42"><a href="#NamedTupleExample-42"><span class="linenos">42</span></a><span class="sd">    An example for a typing.NamedTuple.</span>
+</span><span id="NamedTupleExample-43"><a href="#NamedTupleExample-43"><span class="linenos">43</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="NamedTupleExample-44"><a href="#NamedTupleExample-44"><span class="linenos">44</span></a>
+</span><span id="NamedTupleExample-45"><a href="#NamedTupleExample-45"><span class="linenos">45</span></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="NamedTupleExample-46"><a href="#NamedTupleExample-46"><span class="linenos">46</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of our example tuple.&quot;&quot;&quot;</span>
+</span><span id="NamedTupleExample-47"><a href="#NamedTupleExample-47"><span class="linenos">47</span></a>    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
 </span></pre></div>
 
 

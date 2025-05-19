@@ -1013,6 +1013,9 @@ class Function(Doc[types.FunctionType]):
             localns = _safe_getattr(parent_cls, "__dict__", None)
             if localns is None:
                 break  # pragma: no cover
+        if localns:
+            # https://github.com/mitmproxy/pdoc/issues/809 - a bit of a hack
+            localns = {k:v for k,v in localns.items() if isinstance(v, type)}
 
         if self.name == "__init__":
             sig = sig.replace(return_annotation=empty)

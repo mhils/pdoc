@@ -1,4 +1,8 @@
 <module misc_py312  # Testing features tha…
+    <class misc_py312.Issue809
+        <method def __init__(): ...>
+        <var NamedTupleExample: misc_py312.NamedTupleExample>
+    >
     <var MyType = int  # A custom Python 3.12…>
     <var foo: misc_py312.MyType  # A custom type instan…>
     <var MyTypeWithoutDocstring = int>

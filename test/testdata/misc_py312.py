@@ -9,6 +9,15 @@ from __future__ import annotations
 import typing
 from typing import NamedTuple
 
+
+class Issue809:
+    @property
+    def NamedTupleExample(self) -> NamedTupleExample:
+        # type annotation should refer to class below, not to the property itself.
+        raise NotImplementedError
+
+
+
 # Testing the new Python 3.12 `type` statement.
 type MyType = int
 """A custom Python 3.12 type."""
